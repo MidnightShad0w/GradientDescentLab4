@@ -199,8 +199,9 @@ class BaseDescent:
         float
             Значение функции потерь.
         """
+        # Тут формула такая: MSE = (1/n) * SUM(от 1 до n)(y[i] - y_pred[i])^2
         y_pred = self.predict(x)
-        mse = np.mean((y - y_pred) ** 2)
+        mse = float(np.mean((y - y_pred) ** 2))
         return mse
 
     def predict(self, x: np.ndarray) -> np.ndarray:
@@ -217,7 +218,7 @@ class BaseDescent:
         np.ndarray
             Прогнозируемые значения.
         """
-        y_pred = x @ self.w
+        y_pred = x @ self.w  # Здесь y_pred = X * w где X - признак, а w - вес
         return y_pred
 
 
@@ -247,8 +248,10 @@ class VanillaGradientDescent(BaseDescent):
         np.ndarray
             Разность весов (w_{k + 1} - w_k).
         """
+        # w[k+1]=w[k]−η[k]∇wQ(w[k])
+        # где w[k] - веса до апдейта, η[k] - learning rate, ∇wQ(w[k]) - градиент, w[k+1] - веса после self.w += delta_w
         learning_rate = self.lr()
-        delta_w = -learning_rate * gradient
+        delta_w = -learning_rate * gradient # это - (w[k+1] - w[k])
         self.w += delta_w
         return delta_w
 
@@ -268,10 +271,12 @@ class VanillaGradientDescent(BaseDescent):
         np.ndarray
             Градиент функции потерь по весам.
         """
-        n_samples = x.shape[0]
+        # Градиент ф-ии потерь = (2/n) * X^T * (Xw - y)
+        # где n - кол-во наблюдений, X^T - транспонированная матрица признаков, Xw - y_pred, y - реальные значения
+        n_samples = x.shape[0]  # n
         y_pred = self.predict(x)
         delta = y_pred - y  # Ошибка предсказания
-        gradient = (2 / n_samples) * x.T @ delta  # Градиент функции потерь
+        gradient = (2 / n_samples) * x.T @ delta  # Градиент ф-ии потерь
         return gradient
 
 
@@ -297,7 +302,6 @@ class StochasticDescent(VanillaGradientDescent):
 
     def __init__(self, dimension: int, lambda_: float = 1e-3, batch_size: int = 50,
                  loss_function: LossFunction = LossFunction.MSE):
-
         super().__init__(dimension, lambda_, loss_function)
         self.batch_size = batch_size
 
@@ -317,24 +321,20 @@ class StochasticDescent(VanillaGradientDescent):
         np.ndarray
             Градиент функции потерь по весам, вычисленный по мини-пакету.
         """
+        # Градиент ф-ии потерь = (2/|B|) * XB^T * (XBw - yB)
+
         n_samples = x.shape[0]
-
-        # Сэмплирование индексов для батча
+        # Рандомим индексы для батча
         batch_indices = np.random.randint(low=0, high=n_samples, size=self.batch_size)
-
-        # Выбор батча данных
-        x_batch = x[batch_indices]
-        y_batch = y[batch_indices]
-
-        # Вычисление предсказаний на батче
+        # Выбираем батч данных
+        x_batch = x[batch_indices]  # XB
+        y_batch = y[batch_indices]  # yB
+        # XBw
         y_pred_batch = self.predict(x_batch)
-
-        # Вычисление ошибки на батче
+        # (XBw - yB)
         delta_batch = y_pred_batch - y_batch
-
-        # Вычисление градиента на батче
+        # Вычисляем градиент на батче
         gradient = (2 / self.batch_size) * x_batch.T @ delta_batch
-
         return gradient
 
 
@@ -396,16 +396,14 @@ class MomentumDescent(VanillaGradientDescent):
         np.ndarray
             Разность весов (w_{k + 1} - w_k).
         """
-        # Получаем текущую длину шага обучения η_k
+        # h[k+1]=alpha*h[k]−η[k]∇wQ(w[k]) - моментум
+        # w[k+1]=w[k]−h[k+1] - обновление весов
         learning_rate = self.lr()
-
-        # Обновляем момент h_{k+1} = α * h_k + η_k * ∇wQ(w_k)
+        # Обновляем момент h[k+1]=alpha*h[k]−η[k]∇wQ(w[k])
         self.h = self.alpha * self.h + learning_rate * gradient
-
-        # Обновляем веса w_{k+1} = w_k - h_{k+1}
+        # Обновляем веса w[k+1]=w[k]−h[k+1]
         delta_w = -self.h
         self.w += delta_w
-
         # Возвращаем разницу весов
         return delta_w
 
@@ -482,26 +480,25 @@ class Adam(VanillaGradientDescent):
         np.ndarray
             Разность весов (w_{k + 1} - w_k).
         """
+        # Тут уже черт ногу сломит
+        # m[k+1]=β1m[k]+(1−β1)∇wQ(w[k])
+        # v[k+1]=β2v[k]+(1−β2)(∇wQ(w[k]))2
+        # mˆ[k]=m[k]/(1−β[k]1), vˆ[k]=v[k]/(1−β[k]2)
+        # w[k+1]=w[k]−ηk/(sqrt(vˆ[k+1])+ε)mˆ[k+1]
         # Увеличиваем счетчик итераций
         self.iteration += 1
-
-        # Получаем текущую длину шага обучения η_k
+        # Получаем learning rate
         learning_rate = self.lr()
-
-        # Обновляем biased первые и вторые моменты
+        # Обновляем m[k+1] и v[k+1]
         self.m = self.beta_1 * self.m + (1 - self.beta_1) * gradient
         self.v = self.beta_2 * self.v + (1 - self.beta_2) * (gradient ** 2)
-
-        # Вычисляем bias-corrected первые и вторые моменты
+        # Вычисляем mˆ[k+1] и vˆ[k+1]
         m_hat = self.m / (1 - self.beta_1 ** self.iteration)
         v_hat = self.v / (1 - self.beta_2 ** self.iteration)
-
         # Вычисляем изменение весов
         delta_w = -learning_rate * m_hat / (np.sqrt(v_hat) + self.eps)
-
         # Обновляем веса
         self.w += delta_w
-
         # Возвращаем разницу весов
         return delta_w
 
@@ -554,7 +551,7 @@ class BaseDescentReg(BaseDescent):
         np.ndarray
             Градиент функции потерь с учетом L2 регуляризации по весам.
         """
-        l2_gradient: np.ndarray = np.zeros_like(x.shape[1])  
+        l2_gradient: np.ndarray = np.zeros_like(x.shape[1])
 
         return super().calc_gradient(x, y) + l2_gradient * self.mu
 

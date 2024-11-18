@@ -65,7 +65,38 @@ class LinearRegression:
 
         """
         # TODO: реализовать подбор весов для x и y
-        raise NotImplementedError('Функция fit класса LinearRegression не реализована')
+        loss = self.calc_loss(x, y)  # Вычисляем начальное значение функции потерь
+        self.loss_history.append(loss)  # Добавляем в историю потерь
+
+        for iteration in range(self.max_iter):
+            # Сохраняем предыдущие веса для вычисления разницы
+            previous_weights = self.descent.w.copy()
+
+            # Выполняем шаг градиентного спуска
+            delta_w = self.descent.step(x, y)  # delta_w = w_{k+1} - w_k
+
+            # Проверяем на NaN в весах
+            if np.isnan(self.descent.w).any():
+                print(f"№ итерации - {iteration}, в весах появились NaN.")
+                break
+
+            # Вычисляем евклидову норму разницы весов
+            weight_diff_norm = np.linalg.norm(delta_w)
+
+            # Записываем текущее значение функции потерь в историю
+            loss = self.calc_loss(x, y)
+            self.loss_history.append(loss)
+
+            # Проверяем критерий остановки по tolerance
+            if weight_diff_norm < self.tolerance:
+                print(f"Критерий сходимости достигнут на итерации {iteration}.")
+                break
+
+        else:
+            # Если цикл завершился без break, то достигнут max_iter
+            print(f"Достигнуто максимальное количество итераций: {self.max_iter}")
+
+        return self
 
     def predict(self, x: np.ndarray) -> np.ndarray:
         """
