@@ -69,15 +69,19 @@ class LinearRegression:
         self.loss_history.append(loss)  # Добавляем в историю потерь
 
         for iteration in range(self.max_iter):
-            # Сохраняем предыдущие веса для вычисления разницы
-            previous_weights = self.descent.w.copy()
 
             # Выполняем шаг градиентного спуска
-            delta_w = self.descent.step(x, y)  # delta_w = w_{k+1} - w_k
+            delta_w = self.descent.step(x, y)  # delta_w = w[k+1] - w[k]
+            # ограничил веса, т.к. в MSE и R2 получаются inf и -inf
+            self.descent.w = np.clip(self.descent.w, -1e6, 1e6)
 
             # Проверяем на NaN в весах
             if np.isnan(self.descent.w).any():
                 print(f"№ итерации - {iteration}, в весах появились NaN.")
+                break
+
+            if np.isnan(loss) or np.isinf(loss):
+                print(f"На итерации {iteration} обнаружено некорректное значение функции потерь.")
                 break
 
             # Вычисляем евклидову норму разницы весов
