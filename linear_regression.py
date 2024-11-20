@@ -72,8 +72,6 @@ class LinearRegression:
 
             # Выполняем шаг градиентного спуска
             delta_w = self.descent.step(x, y)  # delta_w = w[k+1] - w[k]
-            # ограничил веса, т.к. в MSE и R2 получаются inf и -inf
-            self.descent.w = np.clip(self.descent.w, -1e6, 1e6)
 
             # Проверяем на NaN в весах
             if np.isnan(self.descent.w).any():

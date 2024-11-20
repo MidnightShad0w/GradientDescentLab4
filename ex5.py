@@ -41,12 +41,12 @@ print(f"Размер валидационной выборки: {x_val.shape[0]}
 print(f"Размер тестовой выборки: {x_test.shape[0]}")
 
 
-lambdas = np.logspace(-5, 1, 5)
+lambdas = np.logspace(-5, -1, 10)  # тут при лямбда ~= 1.0e+01 loss улетают в небеса
 results = {}
 methods = ['full', 'momentum', 'adam']
 
 tolerance = 1e-4  # тут решил поиграться с tolerance и max_iter
-max_iter = 5000
+max_iter = 500
 
 for method in methods:
     results[method] = {}

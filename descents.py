@@ -480,7 +480,7 @@ class Adam(VanillaGradientDescent):
         np.ndarray
             Разность весов (w_{k + 1} - w_k).
         """
-        # Тут уже черт ногу сломит
+        # Проходимся по формулам:
         # m[k+1]=β1m[k]+(1−β1)∇wQ(w[k])
         # v[k+1]=β2v[k]+(1−β2)(∇wQ(w[k]))2
         # mˆ[k]=m[k]/(1−β[k]1), vˆ[k]=v[k]/(1−β[k]2)
@@ -489,7 +489,7 @@ class Adam(VanillaGradientDescent):
         self.iteration += 1
         # Получаем learning rate
         learning_rate = self.lr()
-        # Обновляем m[k+1] и v[k+1]
+        # Обновляем m и v
         self.m = self.beta_1 * self.m + (1 - self.beta_1) * gradient
         self.v = self.beta_2 * self.v + (1 - self.beta_2) * (gradient ** 2)
         # Вычисляем mˆ[k+1] и vˆ[k+1]
