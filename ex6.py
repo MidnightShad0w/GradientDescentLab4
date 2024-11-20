@@ -34,7 +34,7 @@ x = column_transformer.fit_transform(x)
 x_temp, x_test, y_temp, y_test = train_test_split(x, y, test_size=0.1, random_state=42)
 
 # разделяем временную выборку на обучающую и валидационную (8:1)
-x_train, x_val, y_train, y_val = train_test_split(x_temp, y_temp, test_size=1 / 9, random_state=42)
+x_train, x_val, y_train, y_val = train_test_split(x_temp, y_temp, test_size=1/9, random_state=42)
 
 print(f"Размер обучающей выборки: {x_train.shape[0]}")
 print(f"Размер валидационной выборки: {x_val.shape[0]}")
