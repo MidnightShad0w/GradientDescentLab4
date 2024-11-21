@@ -181,7 +181,25 @@ class BaseDescent:
         np.ndarray
             Градиент функции потерь по весам. Этот метод должен быть реализован в подклассах.
         """
-        pass
+        y_pred = self.predict(x)
+        n_samples = x.shape[0]
+
+        if self.loss_function is LossFunction.MSE:
+            # Градиент для MSE: (2 / n) * X^T * (y_pred - y)
+            gradient = (2 / n_samples) * x.T @ (y_pred - y)
+        elif self.loss_function is LossFunction.LogCosh:
+            # Градиент для Log-Cosh: (1 / n) * X^T * tanh(y_pred - y)
+            gradient = (1 / n_samples) * x.T @ np.tanh(y_pred - y)
+        else:
+            raise NotImplementedError(f"Функция потерь {self.loss_function} не реализована.")
+
+        return gradient
+
+    def log_cosh(self, x: np.ndarray) -> np.ndarray:
+        # s always has real part >= 0
+        s = np.sign(x) * x
+        p = np.exp(-2 * s)
+        return s + np.log1p(p) - np.log(2)
 
     def calc_loss(self, x: np.ndarray, y: np.ndarray) -> float:
         """
@@ -199,10 +217,19 @@ class BaseDescent:
         float
             Значение функции потерь.
         """
-        # Тут формула такая: MSE = (1/n) * SUM(от 1 до n)(y[i] - y_pred[i])^2
         y_pred = self.predict(x)
-        mse = float(np.mean((y - y_pred) ** 2))
-        return mse
+        n_samples = x.shape[0]
+
+        if self.loss_function is LossFunction.MSE:
+            # MSE = (1 / n) * SUM((y - y_pred)^2)
+            loss = float(np.mean((y - y_pred) ** 2))
+        elif self.loss_function is LossFunction.LogCosh:
+            # Log-Cosh Loss = (1 / n) * SUM(log(cosh(y_pred - y)))
+            loss = float(np.mean(np.log(self.log_cosh(y_pred - y))))
+        else:
+            raise NotImplementedError(f"Функция потерь {self.loss_function} не реализована.")
+
+        return loss
 
     def predict(self, x: np.ndarray) -> np.ndarray:
         """
@@ -329,12 +356,8 @@ class StochasticDescent(VanillaGradientDescent):
         # Выбираем батч данных
         x_batch = x[batch_indices]  # XB
         y_batch = y[batch_indices]  # yB
-        # XBw
-        y_pred_batch = self.predict(x_batch)
-        # (XBw - yB)
-        delta_batch = y_pred_batch - y_batch
-        # Вычисляем градиент на батче
-        gradient = (2 / self.batch_size) * x_batch.T @ delta_batch
+        # Вычисляем градиент на батче, используя метод из BaseDescent
+        gradient = super().calc_gradient(x_batch, y_batch)
         return gradient
 
 

@@ -1,3 +1,5 @@
+# Тут просто изучал всякое
+
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
