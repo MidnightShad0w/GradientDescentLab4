@@ -195,8 +195,8 @@ class BaseDescent:
 
         return gradient
 
+    # Этот метод сделал потому, что если юзать обычный np.cosh(), то он будет = inf
     def log_cosh(self, x: np.ndarray) -> np.ndarray:
-        # s always has real part >= 0
         s = np.sign(x) * x
         p = np.exp(-2 * s)
         return s + np.log1p(p) - np.log(2)
